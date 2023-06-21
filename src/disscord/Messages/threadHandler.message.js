@@ -4,7 +4,7 @@ module.exports = async (message) => {
   let messages = content;
 
   let channel = message.channel;
-  let isForAi = channel.messages
+  let isForAi = await channel.messages
     .fetchPinned({ limit: 100 })
     .then((msg) =>
       msg.map((el) => {
