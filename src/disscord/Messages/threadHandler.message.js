@@ -17,7 +17,8 @@ module.exports = async (message) => {
 
   let response = await require("../../openai/configure").createMessage(
     messages,
-    message.author.id
+    message.author.id,
+    message.author
   );
 
   await message.reply({ content: response.content });

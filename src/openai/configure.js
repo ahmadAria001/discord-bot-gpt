@@ -1,5 +1,6 @@
 const { Configuration, OpenAIApi } = require("openai");
 let tiktoken = require("@dqbd/tiktoken");
+const { client } = require("../database/connect.mongo");
 
 let openAi;
 
@@ -11,7 +12,7 @@ module.exports = () => {
   return openAi;
 };
 
-module.exports.createMessage = async (message, userId) => {
+module.exports.createMessage = async (message, userId, author) => {
   let msg = [{ role: "user", content: message }];
 
   let isExceed = await calcToken(userId, msg);
@@ -28,7 +29,7 @@ module.exports.createMessage = async (message, userId) => {
   console.log(response.data.usage);
   isExceed.token = response.data.usage.total_tokens;
 
-  let resultUpdate = await updateToken(isExceed);
+  let resultUpdate = await updateToken(isExceed, author);
 
   console.log(resultUpdate);
 
@@ -83,12 +84,14 @@ let calcToken = async (userId, words) => {
 
     let limitConf = dataConfig.container.openAi.limit;
 
-    if (dataUser.interactions.tokenUsed >= limitConf) {
-      isExceed.content = "Exceed Token Limit";
-    }
+    if (dataUser != null || dataUser != undefined) {
+      if (dataUser.interactions.tokenUsed >= limitConf) {
+        isExceed.content = "Exceed Token Limit";
+      }
 
-    if (dataUser.interactions.tokenUsed + numToken >= limitConf) {
-      isExceed.content = "Exceed Token Limit";
+      if (dataUser.interactions.tokenUsed + numToken >= limitConf) {
+        isExceed.content = "Exceed Token Limit";
+      }
     }
 
     if (isExceed != null || isExceed != undefined) return isExceed;
@@ -106,7 +109,7 @@ const calcWord = (messageContent) => {
   return amountOfWord;
 };
 
-const updateToken = async (resourcecs) => {
+const updateToken = async (resourcecs, author) => {
   let conn = require("../database/connect.mongo").client;
 
   let result;
@@ -118,21 +121,36 @@ const updateToken = async (resourcecs) => {
     const idUser = resourcecs.idUser;
     const dataUser = await collection.findOne({ userId: idUser });
 
-    let amountInterac1tion = dataUser.interactions.amount;
-    let amountToken = dataUser.interactions.tokenUsed;
-    let amountWord = dataUser.interactions.words;
+    if (dataUser != null) {
+      let amountInterac1tion = dataUser.interactions.amount;
+      let amountToken = dataUser.interactions.tokenUsed;
+      let amountWord = dataUser.interactions.words;
 
-    result = await collection.updateOne(
-      { userId: idUser },
-      {
-        $set: {
-          "interactions.amount": amountInterac1tion + resourcecs.interaction,
-          "interactions.words": amountWord + resourcecs.words,
-          "interactions.tokenUsed": amountToken + resourcecs.token,
-          "interactions.lastInteraction": Math.floor(Date.now() / 1000),
-        },
-      }
-    );
+      result = await collection.updateOne(
+        { userId: idUser },
+        {
+          $set: {
+            "interactions.amount": amountInterac1tion + resourcecs.interaction,
+            "interactions.words": amountWord + resourcecs.words,
+            "interactions.tokenUsed": amountToken + resourcecs.token,
+            "interactions.lastInteraction": Math.floor(Date.now() / 1000),
+          },
+        }
+      );
+
+      return result;
+    }
+
+    resourcecs = await collection.insertOne({
+      userId: idUser,
+      userName: author.username,
+      interactions: {
+        amount: resourcecs.interaction,
+        words: resourcecs.words,
+        tokenUsed: resourcecs.token,
+        lastInteraction: Math.floor(Date.now() / 1000),
+      },
+    });
   } catch (error) {
     throw error;
   } finally {
