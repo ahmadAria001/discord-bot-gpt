@@ -3,6 +3,7 @@
 
 FolderList.txt
 .env
+.gitignore
 conf.json
 
 .vscode/
