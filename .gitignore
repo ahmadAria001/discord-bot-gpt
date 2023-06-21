@@ -1,0 +1,11 @@
+*.class
+*.png
+
+FolderList.txt
+.env
+conf.json
+
+.vscode/
+database/
+sources/
+node_modules/
