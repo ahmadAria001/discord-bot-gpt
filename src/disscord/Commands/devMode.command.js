@@ -22,8 +22,6 @@ module.exports = async (interaction) => {
           }
         );
 
-        console.log(result);
-
         await interaction.reply({
           content: `Developer Mode has been disabled`,
           ephemeral: true,
@@ -38,8 +36,7 @@ module.exports = async (interaction) => {
           $set: { "container.devmode": true },
         }
       );
-
-      console.log(result);
+      
       await interaction.reply({
         content: `Developer Mode has been enabled`,
         ephemeral: true,

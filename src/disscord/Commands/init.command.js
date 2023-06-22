@@ -1,16 +1,17 @@
 module.exports = async (interaction) => {
   if (interaction.member.id == process.env.OWNER_ID) {
-    let editor = require("../../ActionHandler.handler").jsonEditor();
+    let dbClient = require("../../database/connect.mongo").client;
 
-    let dbInit = editor.get("container.mongodb.isInit");
+    try {
+      await dbClient.connect();
 
-    if (dbInit === false) {
-      let dbClient = require("../../ActionHandler.handler").conn;
+      const config = await dbClient
+        .db("discordBot")
+        .collection("conf")
+        .findOne({ "container.config": 1 }).isInit;
 
-      try {
-        await dbClient.connect();
-
-        const collections = await dbClient
+      if (config === false) {
+        const collections = dbClient
           .db("discordBot")
           .collection("interactions");
 
@@ -25,25 +26,22 @@ module.exports = async (interaction) => {
           },
         });
 
-        await interaction.reply(
+        return await interaction.reply(
           `Init Completed in Namespace ${collections.namespace} with User ID ${
             interaction.user.id
           } and Username ${
             interaction.user.username
           } with Last Interaction is <t:${Math.floor(Date.now() / 1000)}:R>`
         );
-
-        editor.set("container.mongodb.isInit", true);
-        editor.save();
-      } catch (error) {
-        throw error;
-      } finally {
-        await dbClient.close();
-        console.log("Connection CLosed");
-        return;
       }
-    }
 
-    await interaction.reply(`Database Already Initialized Failed`);
+      await interaction.reply(`Database Already Initialized Failed`);
+    } catch (err) {
+      console.error(err);
+      throw err;
+    } finally {
+      await dbClient.close();
+      return;
+    }
   }
 };

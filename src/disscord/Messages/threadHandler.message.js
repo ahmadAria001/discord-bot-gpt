@@ -11,9 +11,11 @@ module.exports = async (message) => {
         return el.embeds.length;
       })
     )
-    .catch((err) => console.log(err));
+    .catch((err) => console.error(err));
 
   if (isForAi < 1) return;
+
+  await message.channel.sendTyping();
 
   let response = await require("../../openai/configure").createMessage(
     messages,

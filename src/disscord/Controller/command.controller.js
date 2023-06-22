@@ -21,4 +21,10 @@ module.exports.commands = async (interaction) => {
 
   if (interaction.commandName === "avatar")
     require("../Commands/avatar.command")(interaction);
+
+  if (interaction.commandName === "listmodel")
+    require("../Commands/getModels.command")(interaction);
+
+  if (interaction.commandName === "resetlimit")
+    require("../Commands/resetLimit.command")(interaction);
 };

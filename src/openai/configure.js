@@ -16,7 +16,6 @@ module.exports.createMessage = async (message, userId, author) => {
   let msg = [{ role: "user", content: message }];
 
   let isExceed = await calcToken(userId, msg);
-  console.log(isExceed);
 
   if (isExceed.content != null) return isExceed;
 
@@ -25,13 +24,9 @@ module.exports.createMessage = async (message, userId, author) => {
     messages: msg,
   });
 
-  // return response.data.usage;
-  console.log(response.data.usage);
   isExceed.token = response.data.usage.total_tokens;
 
   let resultUpdate = await updateToken(isExceed, author);
-
-  console.log(resultUpdate);
 
   return response.data.choices[0].message;
 };
@@ -47,7 +42,6 @@ let calcToken = async (userId, words) => {
 
   for (let index = 0; index < words.length; index++) {
     numToken += 4;
-    // console.log(words[index]);
 
     for (let key in words[index]) {
       numToken += enc.encode(words[index][key]).length;
@@ -158,4 +152,9 @@ const updateToken = async (resourcecs, author) => {
   }
 
   return result;
+};
+
+module.exports.aiModels = async () => {
+  let models = await openAi.listModels();
+  return models.data;
 };
